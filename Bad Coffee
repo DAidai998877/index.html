@@ -1,0 +1,209 @@
+import React, { useState } from 'react';
+import { X, ShoppingCart, Clock, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+
+const MENU_DATA = {
+  "☕ กาแฟ": [
+    { name: "อเมริกาโน่", price: 55 }, { name: "อเมริกาโน่น้ำผึ้ง", price: 65 }, { name: "อเมริกาโน่มะนาว", price: 70 }, { name: "เอสเปรสโซ่", price: 50 }, { name: "เอสเปรสโซ่เย็น", price: 60 },
+    { name: "ลาเต้", price: 65 }, { name: "ลาเต้วานิลลา", price: 75 }, { name: "ลาเต้คาราเมล", price: 75 }, { name: "คาปูชิโน่", price: 65 }, { name: "มอคค่า", price: 75 },
+    { name: "มอคค่าคาราเมล", price: 85 }, { name: "คาราเมลมัคคิอาโต้", price: 85 }, { name: "กาแฟน้ำผึ้ง", price: 70 }, { name: "กาแฟนมสด", price: 65 }, { name: "กาแฟโบราณ", price: 50 },
+    { name: "โอเลี้ยง", price: 45 }, { name: "โอเลี้ยงยกล้อ", price: 55 }, { name: "กาแฟดำเย็น", price: 55 }, { name: "กาแฟมะพร้าว", price: 80 }, { name: "กาแฟส้ม", price: 80 },
+    { name: "กาแฟลิ้นจี่", price: 85 }, { name: "กาแฟสตรอว์เบอร์รี", price: 85 }, { name: "กาแฟมิ้นท์", price: 80 }, { name: "กาแฟชาเขียว", price: 85 }, { name: "กาแฟโกโก้", price: 75 },
+    { name: "กาแฟบราวน์ชูการ์", price: 80 }, { name: "กาแฟเฮเซลนัท", price: 80 }, { name: "กาแฟอัลมอนด์", price: 85 }, { name: "กาแฟซอลท์คาราเมล", price: 85 }, { name: "ดับเบิลเอสเปรสโซ่", price: 70 }
+  ],
+  "🥛 นม": [
+    { name: "นมสดเย็น", price: 50 }, { name: "นมสดคาราเมล", price: 60 }, { name: "นมสดวานิลลา", price: 60 }, { name: "นมสดน้ำผึ้ง", price: 60 }, { name: "นมชมพู", price: 50 },
+    { name: "นมสดบราวน์ชูการ์", price: 65 }, { name: "นมสดสตรอว์เบอร์รี", price: 65 }, { name: "นมสดโอรีโอ้", price: 70 }, { name: "นมสดโกโก้", price: 65 }, { name: "นมสดมิ้นท์", price: 60 }
+  ],
+  "🍹 น้ำผลไม้": [
+    { name: "น้ำส้มคั้นสด", price: 60 }, { name: "น้ำมะนาวสด", price: 50 }, { name: "น้ำผึ้งมะนาว", price: 60 }, { name: "น้ำแตงโมปั่น", price: 65 }, { name: "น้ำสตรอว์เบอร์รีปั่น", price: 70 },
+    { name: "น้ำมะม่วงปั่น", price: 70 }, { name: "น้ำเสาวรสปั่น", price: 65 }, { name: "น้ำลิ้นจี่ปั่น", price: 70 }, { name: "น้ำกีวี่ปั่น", price: 70 }, { name: "น้ำบลูเบอร์รีปั่น", price: 75 }
+  ],
+  "🥤 น้ำอัดลม": [
+    { name: "โซดาเปล่า", price: 30 }, { name: "แดงโซดา", price: 35 }, { name: "เขียวโซดา", price: 35 }, { name: "สไปรท์มะนาว", price: 40 }, { name: "โค้กมะนาว", price: 40 },
+    { name: "แฟนต้าน้ำแดง", price: 35 }, { name: "แฟนต้าน้ำเขียว", price: 35 }, { name: "รูทเบียร์", price: 40 }, { name: "โซดาบ๊วย", price: 40 }, { name: "โซดามะนาว", price: 40 }
+  ]
+};
+
+const TOPPINGS = [
+  { name: "ไข่มุกดำ", price: 10 }, { name: "ไข่มุกบราวน์ชูการ์", price: 15 },
+  { name: "เจลลี่กาแฟ", price: 15 }, { name: "วิปครีม", price: 20 }, { name: "ครีมชีส", price: 25 }
+];
+
+export default function App() {
+  const [customerName, setCustomerName] = useState('');
+  const [cart, setCart] = useState([]);
+  const [queues, setQueues] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [sweetness, setSweetness] = useState('100%');
+  const [selectedMilk, setSelectedMilk] = useState('นมสด');
+  const [selectedToppings, setSelectedToppings] = useState([]);
+
+  const toggleTopping = (topping) => {
+    setSelectedToppings(prev =>
+      prev.find(t => t.name === topping.name)
+        ? prev.filter(t => t.name !== topping.name)
+        : [...prev, topping]
+    );
+  };
+
+  const addToCart = () => {
+    const isSoda = selectedItem.category === "🥤 น้ำอัดลม";
+    const toppingTotal = (isSoda) ? 0 : selectedToppings.reduce((sum, t) => sum + t.price, 0);
+    const newItem = {
+      ...selectedItem,
+      id: Date.now(),
+      sweetness: sweetness,
+      milk: (isSoda || selectedItem.category === "🍹 น้ำผลไม้") ? null : selectedMilk,
+      toppings: isSoda ? [] : [...selectedToppings],
+      finalPrice: selectedItem.price + toppingTotal
+    };
+    setCart(prev => [...prev, newItem]);
+    setSelectedItem(null);
+    setSelectedToppings([]);
+    setSweetness('100%');
+  };
+
+  const placeOrder = () => {
+    if (cart.length === 0) return;
+    const newQueue = {
+      id: Date.now(),
+      items: [...cart],
+      customer: customerName || 'ลูกค้าทั่วไป',
+      totalItems: cart.length,
+      totalPrice: cart.reduce((s, i) => s + i.finalPrice, 0),
+      finishedCount: 0,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setQueues(prev => [...prev, newQueue]);
+    
+    // Add to History
+    setHistory(prev => [newQueue, ...prev]);
+
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      setQueues(prev => prev.map(q => q.id === newQueue.id ? { ...q, finishedCount: count } : q));
+      if (count >= newQueue.totalItems) {
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    setCart([]);
+    setCustomerName('');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#1a1a1a] text-[#a1a1aa] p-4 font-sans pb-32">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold text-[#d97706]">Bad Coffee</h1>
+        <p className="text-sm text-[#71717a]">เลือกรสชาติที่คุณชอบ</p>
+      </header>
+
+      <input
+        type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
+        placeholder="ชื่อลูกค้า..." className="w-full bg-[#27272a] p-3 rounded-lg border border-[#3f3f46] outline-none mb-6 text-[#d97706] placeholder-[#52525b]"
+      />
+
+      {Object.entries(MENU_DATA).map(([category, items]) => (
+        <section key={category} className="mb-8">
+          <h2 className="text-[#f59e0b] font-bold mb-4 uppercase text-sm">{category}</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((item, idx) => (
+              <button key={idx} onClick={() => { 
+                setSelectedItem({ ...item, category }); 
+                setSweetness(category === "🥤 น้ำอัดลม" ? "มีน้ำตาล" : "100%");
+              }} className="bg-[#27272a] p-4 rounded-xl border border-[#3f3f46] hover:border-[#d97706] transition text-left flex flex-col justify-between">
+                <p className="font-bold text-sm text-[#e4e4e7]">{item.name}</p>
+                <p className="text-[#d97706] text-xs mt-1 font-bold">{item.price} ฿</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {selectedItem && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#27272a] p-6 rounded-2xl w-full max-w-sm border border-[#3f3f46]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-bold text-[#f59e0b]">{selectedItem.name}</h2>
+              <button onClick={() => setSelectedItem(null)}><X size={20} className="text-[#a1a1aa]" /></button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-[10px] text-[#71717a] mb-2 uppercase">ระดับความหวาน</p>
+                <div className="grid grid-cols-5 gap-1">
+                  {selectedItem.category === "🥤 น้ำอัดลม" 
+                    ? ["มีน้ำตาล", "ไม่มีน้ำตาล"].map(s => (
+                        <button key={s} onClick={() => setSweetness(s)} className={`p-1.5 text-[10px] rounded ${sweetness === s ? 'bg-[#d97706] text-white' : 'bg-[#3f3f46]'}`}>{s}</button>
+                      ))
+                    : ['0%', '25%', '50%', '80%', '100%'].map(s => (
+                        <button key={s} onClick={() => setSweetness(s)} className={`p-1 text-[10px] rounded ${sweetness === s ? 'bg-[#d97706] text-white' : 'bg-[#3f3f46]'}`}>{s}</button>
+                      ))}
+                </div>
+              </div>
+              
+              {selectedItem.category !== "🥤 น้ำอัดลม" && selectedItem.category !== "🍹 น้ำผลไม้" && (
+                <div>
+                    <p className="text-[10px] text-[#71717a] mb-2 uppercase">นม</p>
+                    <div className="grid grid-cols-3 gap-1">
+                      {["นมสด", "นมถั่วเหลือง", "นมโอ๊ต"].map(m => (
+                        <button key={m} onClick={() => setSelectedMilk(m)} className={`p-1.5 text-[10px] rounded ${selectedMilk === m ? 'bg-[#d97706] text-white' : 'bg-[#3f3f46]'}`}>{m}</button>
+                      ))}
+                    </div>
+                </div>
+              )}
+              
+              {selectedItem.category !== "🥤 น้ำอัดลม" && (
+                <div>
+                    <p className="text-[10px] text-[#71717a] mb-2 uppercase">ท็อปปิ้ง</p>
+                    {TOPPINGS.map(t => (
+                      <button key={t.name} onClick={() => toggleTopping(t)} className={`w-full p-2 mb-1 flex justify-between text-[11px] rounded ${selectedToppings.find(st => st.name === t.name) ? 'bg-[#d97706] text-white' : 'bg-[#3f3f46]'}`}>
+                        {t.name} <span>+{t.price} ฿</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+            <button onClick={addToCart} className="w-full mt-6 p-3 bg-[#d97706] text-white rounded-lg font-bold">ยืนยันรายการ</button>
+          </div>
+        </div>
+      )}
+
+      {}
+      <div className="mt-10">
+        <h2 className="text-[#f59e0b] font-bold mb-4 uppercase text-sm">สถานะคิว</h2>
+        {queues.length === 0 ? <p className="text-[#52525b] text-sm italic">ไม่มีรายการสั่งซื้อในคิว</p> : queues.map(q => (
+          <div key={q.id} className="bg-[#27272a] border border-[#d97706] p-4 rounded-xl mb-3">
+            <p className="text-[12px] text-[#f59e0b] font-bold">ลูกค้า: {q.customer}</p>
+            <p className="text-[11px] text-[#e4e4e7]">สถานะ: {q.finishedCount} / {q.totalItems} แก้ว</p>
+            <p className="text-[11px] text-[#a1a1aa]">รอประมาณ {(q.totalItems - q.finishedCount) * 3} นาที</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-10 mb-20">
+        <h2 className="text-[#f59e0b] font-bold mb-4 uppercase text-sm">ประวัติการสั่งซื้อ</h2>
+        {history.length === 0 ? <p className="text-[#52525b] text-sm italic">ยังไม่มีประวัติ</p> : history.map((h, i) => (
+          <div key={i} className="bg-[#27272a] p-4 rounded-xl mb-3 border border-[#3f3f46]">
+            <p className="text-[12px] text-[#d97706] font-bold">{h.timestamp} - {h.customer}</p>
+            {h.items.map((item, idx) => (
+              <p key={idx} className="text-[11px] text-[#e4e4e7] my-1">
+                • {item.name} ({item.sweetness}) {item.milk && `+${item.milk}`} - {item.finalPrice} ฿
+              </p>
+            ))}
+            <p className="text-[11px] text-[#f59e0b] font-bold mt-2 pt-2 border-t border-[#3f3f46]">รวมจ่าย: {h.totalPrice} ฿</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#27272a] border-t border-[#3f3f46] z-30">
+        <button onClick={placeOrder} className="w-full bg-[#d97706] text-white p-4 rounded-xl font-bold flex justify-between items-center shadow-lg">
+          <span>{cart.length > 0 ? `สั่งซื้อ ${cart.length} รายการ` : "ตะกร้าว่างเปล่า"}</span>
+          <span className="text-xl">{cart.reduce((s, i) => s + i.finalPrice, 0)} ฿</span>
+        </button>
+      </div>
+    </div>
+  );
+}
